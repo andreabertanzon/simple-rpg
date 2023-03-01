@@ -9,7 +9,7 @@
             "name": "(lldb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/zig-out/bin/first-rpg",
+            "program": "${workspaceFolder}/zig-out/bin/simple-rpg",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",

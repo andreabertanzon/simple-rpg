@@ -4,6 +4,9 @@ const c = @cImport({
     @cInclude("SDL.h");
     @cInclude("SDL_image.h");
 });
+const print = std.debug.print;
+const g = @import("engine/global.zig");
+const Global = g.Global();
 
 const ESC_KEY = 41;
 
@@ -13,19 +16,25 @@ pub fn main() !void {
     _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_MINOR_VERSION, 3);
 
     if (c.SDL_Init(c.SDL_INIT_VIDEO) < 0) {
-        std.debug.print("could not init sdl \n", .{});
+        print("could not init sdl \n", .{});
         return;
     }
+    var global = Global.init();
 
+    //var p = std.ArrayList();
+
+    print("Width: {d}",.{global.render.width});
+    global.render.render_begin();
+    print("Width: {d}",.{global.render.width});
     var window = c.SDL_CreateWindow("Game", c.SDL_WINDOWPOS_CENTERED, c.SDL_WINDOWPOS_CENTERED, 800, 600, c.SDL_WINDOW_OPENGL) orelse return;
 
     // if(!window){
-    //     std.debug.print("error opening window\n", .{});
+    //     print("error opening window\n", .{});
     //     return;
     // }
     _ = c.SDL_GL_CreateContext(window);
     if (c.gladLoadGLLoader(@as(c.GLADloadproc, c.SDL_GL_GetProcAddress)) < 1) {
-        std.debug.print("ERROR:", .{});
+        print("ERROR:", .{});
         return;
     }
     mainloop: while (true) {
@@ -33,12 +42,12 @@ pub fn main() !void {
         while (c.SDL_PollEvent(&event) != 0) {
             switch (event.type) {
                 c.SDL_QUIT => {
-                    std.debug.print("closing", .{});
+                    print("closing", .{});
                     break :mainloop;
                 },
                 c.SDL_KEYDOWN => switch (event.key.keysym.scancode) {
                     ESC_KEY => break :mainloop,
-                    else => std.debug.print("{}", .{event.key.keysym.scancode}),
+                    else => print("{}", .{event.key.keysym.scancode}),
                 },
                 else => {},
             }
