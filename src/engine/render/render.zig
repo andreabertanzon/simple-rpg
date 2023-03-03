@@ -4,27 +4,24 @@ const c = @cImport({
     @cInclude("SDL_image.h");
 });
 
-pub fn Render() type {
-    return struct {
-        const Self = @This();
+pub const Render = struct {
+    window: *c.SDL_Window = undefined,
+    width: f32 = 0,
+    height: f32 = 0,
 
-        window: *c.SDL_Window = undefined,
-        width: f32 = 0,
-        height: f32 = 0,
+    pub fn render_init() Render {
+        return Render{
+            .width = 800,
+            .height = 600,
+        };
+    }
 
-        pub fn render_init(width: f32, height: f32) Self {
-            return Self{
-                .width = width,
-                .height = height,
-            };
-            //self.window = render_init_window();
+    pub fn render_begin(self: *Render) void {
+        self.width += 1;
+    }
 
-        }
-        pub fn render_begin(self: *Self) void {
-            self.width += 1;
-        }
-
-        pub fn render_end() void {}
-        pub fn render_quad() void {}
-    };
-}
+    pub fn render_end(window: *c.SDL_Window) void {
+        c.SDL_GL_SwapWindow(window);
+    }
+    pub fn render_quad() void {}
+};

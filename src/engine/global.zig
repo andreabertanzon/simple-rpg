@@ -3,20 +3,39 @@ const c = @cImport({
     @cInclude("SDL.h");
     @cInclude("SDL_image.h");
 });
-const render = @import("render/render.zig").Render();
+const Render = @import("render/render.zig").Render;
 
-/// Represents the global state in the application
-pub fn Global() type {
-    return struct {
-        const Self = @This();
-        
-        render: render,
+pub const Global = struct {
+  render: Render = undefined,
 
-        /// initializes a `Global` type
-        pub fn init() Self {
-            return Self {
-                .render = render.render_init(800,600)
-            };
-        }
+  pub fn init() Global {
+    var renderer = Render.render_init();
+    return Global {
+        .render = renderer
     };
-} 
+  }  
+};
+
+pub const Pippo = struct {
+    age: i32 = undefined,
+    duck: Paperino = undefined,
+
+    pub fn init(self: *Pippo) void {
+        self.age = 0;
+        self.duck = Paperino.init();
+    }
+};
+
+pub const Paperino = struct {
+    height: f32 = 0.2,
+    testa: i32 = 1,
+    body: i32 = undefined,
+
+    pub fn init() Paperino {
+        return Paperino{
+            .height = 1,
+            .testa = 10,
+            .body = 10,
+        };
+    }
+};

@@ -6,7 +6,7 @@ const c = @cImport({
 });
 const print = std.debug.print;
 const g = @import("engine/global.zig");
-const Global = g.Global();
+const Global = g.Global;
 
 const ESC_KEY = 41;
 
@@ -28,10 +28,6 @@ pub fn main() !void {
     print("Width: {d}",.{global.render.width});
     var window = c.SDL_CreateWindow("Game", c.SDL_WINDOWPOS_CENTERED, c.SDL_WINDOWPOS_CENTERED, 800, 600, c.SDL_WINDOW_OPENGL) orelse return;
 
-    // if(!window){
-    //     print("error opening window\n", .{});
-    //     return;
-    // }
     _ = c.SDL_GL_CreateContext(window);
     if (c.gladLoadGLLoader(@as(c.GLADloadproc, c.SDL_GL_GetProcAddress)) < 1) {
         print("ERROR:", .{});
