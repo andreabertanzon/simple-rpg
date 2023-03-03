@@ -28,6 +28,7 @@ pub fn build(b: *std.Build) void {
     exe.addLibraryPath(sdl_path ++ "lib/");
     exe.addIncludePath(sdl_path ++ "");
     exe.addIncludePath("glad/src/glad");
+    exe.addIncludePath("linmath/");
     //b.installBinFile(sdl_path ++ "lib/x64/SDL2.lib", "SDL2.lib");
     exe.linkSystemLibrary("SDL2");
     exe.linkSystemLibrary("SDL2_image");

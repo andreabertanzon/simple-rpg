@@ -3,6 +3,7 @@ const c = @cImport({
     @cInclude("glad.h");
     @cInclude("SDL.h");
     @cInclude("SDL_image.h");
+    @cInclude("linmath.h");
 });
 const print = std.debug.print;
 const g = @import("engine/global.zig");
@@ -11,24 +12,8 @@ const Global = g.Global;
 const ESC_KEY = 41;
 
 pub fn main() !void {
-    _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_PROFILE_MASK, c.SDL_GL_CONTEXT_PROFILE_CORE);
-    _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_MAJOR_VERSION, 3);
-    _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_MINOR_VERSION, 3);
-
-    if (c.SDL_Init(c.SDL_INIT_VIDEO) < 0) {
-        print("could not init sdl \n", .{});
-        return;
-    }
     var global = Global.init();
-
-    //var p = std.ArrayList();
-
-    print("Width: {d}",.{global.render.width});
-    global.render.render_begin();
-    print("Width: {d}",.{global.render.width});
-    var window = c.SDL_CreateWindow("Game", c.SDL_WINDOWPOS_CENTERED, c.SDL_WINDOWPOS_CENTERED, 800, 600, c.SDL_WINDOW_OPENGL) orelse return;
-
-    _ = c.SDL_GL_CreateContext(window);
+    
     if (c.gladLoadGLLoader(@as(c.GLADloadproc, c.SDL_GL_GetProcAddress)) < 1) {
         print("ERROR:", .{});
         return;
@@ -48,6 +33,15 @@ pub fn main() !void {
                 else => {},
             }
         }
+        global.render.render_begin();
+
+        global.render.render_quad(
+            c.vec2{global.render.width * 0.5, global.render.height * 0.5},
+            c.vec2{50,50},
+            c.vec4{1,1,1,1}
+        );
+
+        global.render.render_end(global.render.window);
     }
 }
 
