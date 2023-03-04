@@ -7,15 +7,11 @@
     "configurations": [        
         {
             "name": "(lldb) Launch",
-            "type": "cppdbg",
+            "type": "gdb",
             "request": "launch",
-            "program": "${workspaceFolder}/zig-out/bin/simple-rpg",
-            "args": [],
+            "target": "${workspaceFolder}/zig-out/bin/simple-rpg",       
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
-            "environment": [],
-            "externalConsole": false,
-            "MIMode": "lldb",
             "preLaunchTask": "build"
         }
     ]
