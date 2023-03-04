@@ -34,17 +34,17 @@ pub const Render = struct {
     pub fn render_quad(self: *Render, _: c.vec2, _: c.vec2, _: c.vec4) void {
         c.glBindVertexArray(self.state.vao_quad);
 
-       c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
-       c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
+        c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
+        c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
 
-       c.glBindVertexArray(0);
+        c.glBindVertexArray(0);
     }
 };
 
 pub const Render_State_Internal = struct {
     vao_quad: u32 = 0,
-    vbo_quad: c_uint = 0,
-    ebo_quad: c_uint = 0,
+    vbo_quad: u32 = 0,
+    ebo_quad: u32 = 0,
 
     pub fn render_init_window(_: *Render_State_Internal, width: i32, height: i32) *c.SDL_Window {
         _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_PROFILE_MASK, c.SDL_GL_CONTEXT_PROFILE_CORE);
@@ -78,18 +78,15 @@ pub const Render_State_Internal = struct {
             -0.5, 0.5,  0, 1, 0,
         };
         var indices = [_]u32{ 0, 1, 3, 1, 2, 3 };
-        // var casted = @intCast(c_uint, self.vao_quad);
 
         c.glGenVertexArrays(1, &self.vao_quad);
         c.glGenBuffers(1, &self.vbo_quad);
         c.glGenBuffers(1, &self.ebo_quad);
 
         c.glBindVertexArray(self.vao_quad);
-        // var vboCasted = @intCast(c_uint, self.vbo_quad);
         c.glBindBuffer(c.GL_ARRAY_BUFFER, self.vbo_quad);
         c.glBufferData(c.GL_ARRAY_BUFFER, @sizeOf(@TypeOf(vertices)), &vertices, c.GL_STATIC_DRAW);
 
-        // var eboCasted = @intCast(c_uint, self.ebo);
         c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, self.ebo_quad);
         c.glBufferData(c.GL_ELEMENT_ARRAY_BUFFER, @sizeOf(@TypeOf(indices)), &indices, c.GL_STATIC_DRAW);
 

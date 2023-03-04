@@ -13,11 +13,7 @@ const ESC_KEY = 41;
 
 pub fn main() !void {
     var global = Global.init();
-    
-    // if (c.gladLoadGLLoader(@as(c.GLADloadproc, c.SDL_GL_GetProcAddress)) < 1) {
-    //     print("ERROR:", .{});
-    //     return;
-    // }
+
     mainloop: while (true) {
         var event: c.SDL_Event = undefined;
         while (c.SDL_PollEvent(&event) != 0) {
@@ -43,11 +39,4 @@ pub fn main() !void {
 
         global.render.render_end(global.render.window);
     }
-}
-
-test "simple test" {
-    var list = std.ArrayList(i32).init(std.testing.allocator);
-    defer list.deinit(); // try commenting this out and see if zig detects the memory leak!
-    try list.append(42);
-    try std.testing.expectEqual(@as(i32, 42), list.pop());
 }
