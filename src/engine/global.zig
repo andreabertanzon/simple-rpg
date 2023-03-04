@@ -15,27 +15,3 @@ pub const Global = struct {
     };
   }  
 };
-
-pub const Pippo = struct {
-    age: i32 = undefined,
-    duck: Paperino = undefined,
-
-    pub fn init(self: *Pippo) void {
-        self.age = 0;
-        self.duck = Paperino.init();
-    }
-};
-
-pub const Paperino = struct {
-    height: f32 = 0.2,
-    testa: i32 = 1,
-    body: i32 = undefined,
-
-    pub fn init() Paperino {
-        return Paperino{
-            .height = 1,
-            .testa = 10,
-            .body = 10,
-        };
-    }
-};

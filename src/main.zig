@@ -14,10 +14,10 @@ const ESC_KEY = 41;
 pub fn main() !void {
     var global = Global.init();
     
-    if (c.gladLoadGLLoader(@as(c.GLADloadproc, c.SDL_GL_GetProcAddress)) < 1) {
-        print("ERROR:", .{});
-        return;
-    }
+    // if (c.gladLoadGLLoader(@as(c.GLADloadproc, c.SDL_GL_GetProcAddress)) < 1) {
+    //     print("ERROR:", .{});
+    //     return;
+    // }
     mainloop: while (true) {
         var event: c.SDL_Event = undefined;
         while (c.SDL_PollEvent(&event) != 0) {
