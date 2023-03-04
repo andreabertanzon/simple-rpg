@@ -22,6 +22,7 @@ pub fn build(b: *std.Build) void {
         .target = target,
         .optimize = optimize,
     });
+    glad.linkLibC();
     
     const sdl_path = "/opt/homebrew/";
     exe.addIncludePath(sdl_path ++ "include/SDL2");

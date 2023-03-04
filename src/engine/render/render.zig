@@ -81,8 +81,8 @@ pub const Render_State_Internal = struct {
         // var casted = @intCast(c_uint, self.vao_quad);
 
         c.glGenVertexArrays(1, self.vao_quad);
-        c.glGenBuffers(1, &(self.vbo_quad));
-        c.glGenBuffers(1, &(self.ebo_quad));
+        c.glGenBuffers(1, &self.vbo_quad);
+        c.glGenBuffers(1, &self.ebo_quad);
 
         c.glBindVertexArray(self.vao_quad);
         // var vboCasted = @intCast(c_uint, self.vbo_quad);
