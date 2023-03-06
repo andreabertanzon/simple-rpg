@@ -77,19 +77,37 @@ pub const Render_State_Internal = struct {
             -0.5, -0.5, 0, 1, 1,
             -0.5, 0.5,  0, 1, 0,
         };
+        
         var indices = [_]u32{ 0, 1, 3, 1, 2, 3 };
-
         c.glGenVertexArrays(1, &self.vao_quad);
-        c.glGenBuffers(1, &self.vbo_quad);
-        c.glGenBuffers(1, &self.ebo_quad);
+        c.glGenBuffers(1, &self.vbo_quad); // generates the buffer
+        c.glGenBuffers(1, &self.ebo_quad); // generates the buffer
 
         c.glBindVertexArray(self.vao_quad);
+
+        // bind vbo as a vertex buffer object, marking it as GL_ARRAY_BUFFER
         c.glBindBuffer(c.GL_ARRAY_BUFFER, self.vbo_quad);
         c.glBufferData(c.GL_ARRAY_BUFFER, @sizeOf(@TypeOf(vertices)), &vertices, c.GL_STATIC_DRAW);
 
         c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, self.ebo_quad);
-        c.glBufferData(c.GL_ELEMENT_ARRAY_BUFFER, @sizeOf(@TypeOf(indices)), &indices, c.GL_STATIC_DRAW);
+        //  copies the previously defined vertex data into the buffer's memory
 
+        // first argument is the type of the buffer we want to copy data into: 
+            //the vertex buffer object currently bound to the GL_ARRAY_BUFFER target. 
+        
+        //The second argument specifies the size of the data (in bytes) we want to pass to the buffer; 
+            // a simple sizeof of the vertex data suffices. 
+        
+        //The third parameter is the actual data we want to send.
+
+        //The fourth parameter specifies how we want the graphics card to manage the given data. 
+        //This can take 3 forms:
+
+        //1. GL_STREAM_DRAW: the data is set only once and used by the GPU at most a few times.
+        //2. GL_STATIC_DRAW: the data is set only once and used many times.
+        //3. GL_DYNAMIC_DRAW: the data is changed a lot and used many times.
+        c.glBufferData(c.GL_ELEMENT_ARRAY_BUFFER, @sizeOf(@TypeOf(indices)), &indices, c.GL_STATIC_DRAW);
+        
         //xyz
         c.glVertexAttribPointer(0, 3, c.GL_FLOAT, c.GL_FALSE, 5 * @sizeOf(f32), null);
         c.glEnableVertexAttribArray(0);
