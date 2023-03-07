@@ -7,11 +7,15 @@ const c = @cImport({
 });
 const print = std.debug.print;
 const g = @import("engine/global.zig");
+const io = @import("engine/io/io.zig");
 const Global = g.Global;
 
 const ESC_KEY = 41;
 
 pub fn main() !void {
+
+    _ = io.io_file_read();
+    
     var global = Global.init();
 
     mainloop: while (true) {
