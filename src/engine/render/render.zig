@@ -6,6 +6,8 @@ const c = @cImport({
 });
 
 const std = @import("std");
+const io = @import("../io/io.zig");
+
 const print = std.debug.print;
 
 pub const Render = struct {
@@ -45,6 +47,9 @@ pub const Render_State_Internal = struct {
     vao_quad: u32 = 0,
     vbo_quad: u32 = 0,
     ebo_quad: u32 = 0,
+    shader_default: u32 = 0,
+    texture_color: u32 = 0,
+    projection: c.mat4x4 = undefined,
 
     pub fn render_init_window(_: *Render_State_Internal, width: i32, height: i32) *c.SDL_Window {
         _ = c.SDL_GL_SetAttribute(c.SDL_GL_CONTEXT_PROFILE_MASK, c.SDL_GL_CONTEXT_PROFILE_CORE);
@@ -77,7 +82,7 @@ pub const Render_State_Internal = struct {
             -0.5, -0.5, 0, 1, 1,
             -0.5, 0.5,  0, 1, 0,
         };
-        
+
         var indices = [_]u32{ 0, 1, 3, 1, 2, 3 };
         c.glGenVertexArrays(1, &self.vao_quad);
         c.glGenBuffers(1, &self.vbo_quad); // generates the buffer
@@ -92,22 +97,22 @@ pub const Render_State_Internal = struct {
         c.glBindBuffer(c.GL_ELEMENT_ARRAY_BUFFER, self.ebo_quad);
         //  copies the previously defined vertex data into the buffer's memory
 
-        // first argument is the type of the buffer we want to copy data into: 
-            //the vertex buffer object currently bound to the GL_ARRAY_BUFFER target. 
-        
-        //The second argument specifies the size of the data (in bytes) we want to pass to the buffer; 
-            // a simple sizeof of the vertex data suffices. 
-        
+        // first argument is the type of the buffer we want to copy data into:
+        //the vertex buffer object currently bound to the GL_ARRAY_BUFFER target.
+
+        //The second argument specifies the size of the data (in bytes) we want to pass to the buffer;
+        // a simple sizeof of the vertex data suffices.
+
         //The third parameter is the actual data we want to send.
 
-        //The fourth parameter specifies how we want the graphics card to manage the given data. 
+        //The fourth parameter specifies how we want the graphics card to manage the given data.
         //This can take 3 forms:
 
         //1. GL_STREAM_DRAW: the data is set only once and used by the GPU at most a few times.
         //2. GL_STATIC_DRAW: the data is set only once and used many times.
         //3. GL_DYNAMIC_DRAW: the data is changed a lot and used many times.
         c.glBufferData(c.GL_ELEMENT_ARRAY_BUFFER, @sizeOf(@TypeOf(indices)), &indices, c.GL_STATIC_DRAW);
-        
+
         //xyz
         c.glVertexAttribPointer(0, 3, c.GL_FLOAT, c.GL_FALSE, 5 * @sizeOf(f32), null);
         c.glEnableVertexAttribArray(0);
@@ -117,5 +122,56 @@ pub const Render_State_Internal = struct {
         c.glEnableVertexAttribArray(1);
 
         c.glBindVertexArray(0);
+    }
+
+    pub fn render_shader_create(path_vert: []const u8, path_frag: []const u8) u32 {
+        var success = false;
+        var log: [512]u8 = undefined;
+
+        var file_vertex: io.File = io.io_file_read(path_vert);
+        if (!file_vertex.is_valid) {
+            print("path: {c}\n", .{path_vert});
+            @panic("Error rendering shader\n");
+        }
+
+        var shader_vertex = c.glCreateShader(c.GL_VERTEX_SHADER);
+        c.glShaderSource(shader_vertex, 1, &file_vertex, null);
+        c.glCompileShader(shader_vertex);
+        c.glGetShaderiv(shader_vertex, c.GL_COMPILE_STATUS, &success);
+        if (!success) {
+            c.glGetShaderInfoLog(shader_vertex, 512, null, log);
+            print("shader log: {c}\n", .{log});
+            @panic("Error compiling vertex shader");
+        }
+
+        // loads the GLSL script in memory;
+        const file_fragment: io.File = io.io_file_read(path_frag);
+        if (!file_fragment.is_valid) {
+            print("Error reading shader:{c}", .{path_frag});
+            @panic("Error in reading shader fragment");
+        }
+
+        var shader_fragment = c.glCreateShader(c.GL_FRAGMENT_SHADER);
+        c.glShaderSource(shader_fragment);
+        c.glCompileShader(shader_fragment);
+        c.glGetShaderiv(shader_fragment, c.GL_COMPILE_STATUS, &success);
+        if (!success) {
+            c.glShaderInfoLog(shader_fragment, 512, null, log);
+            print("Error compiling fragment shader:{c}", .{log});
+            @panic("Error compiling fragment shader");
+        }
+
+        var shader: u32 = c.glCreateProgram();
+        c.glAttachShader(shader, shader_vertex);
+        c.glAttachShader(shader, shader_fragment);
+        c.glLinkProgram(shader);
+        c.glGetProgramiv(shader, c.GL_LINK_STATUS, &success);
+        if (!success) {
+            c.glShaderInfoLog(shader, 512, null, log);
+            print("Linking shader:{c}", .{log});
+            @panic("error linking shader");
+        }
+
+        return shader;
     }
 };

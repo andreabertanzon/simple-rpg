@@ -14,9 +14,6 @@ const ESC_KEY = 41;
 
 pub fn main() !void {
 
-    var file = try io.io_file_read();
-    print("\nFILE: {}\n", .{file.size});
-    
     var global = Global.init();
 
     mainloop: while (true) {
