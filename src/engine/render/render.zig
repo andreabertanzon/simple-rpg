@@ -41,6 +41,30 @@ pub const Render = struct {
 
         c.glBindVertexArray(0);
     }
+
+    pub fn render_init_shaders(self:*Render) void {
+        self.shader_default = self.render_shader_create("./shaders/default.vert", "./shaders/default.frag");
+        c.mat4x4_ortho(self.state.projection, 0, self.width, 0, self.height, -2, -2);
+
+        c.glUseProgram(self.state.shader_default);
+        c.glUniformMatrix4fv(
+            c.glGenUniformLocation(self.state.shader_default,"projection"),
+            1,
+            c.GL_FALSE,
+            &self.state.projection[0][0]
+        );
+    }
+
+    pub fn render_init_color_texture(texture:*u32) void {
+        c.glGenTextures(1, texture);
+        c.glBindTexture(c.GL_TEXTURE_2D, *texture);
+        var solid_white= [4]u8{255, 255, 255, 255};
+        c.glTexImage2D(c.GL_TEXTURE_2D, 0,
+        c.GL_RGBA, 1, 1, 0, c.GL_RGBA, 
+        c.GL_UNSIGNED_BYTE, solid_white);
+
+        c.glBindTexture(c.GL_TEXTURE_2D, 0);
+    }
 };
 
 pub const Render_State_Internal = struct {
@@ -124,7 +148,7 @@ pub const Render_State_Internal = struct {
         c.glBindVertexArray(0);
     }
 
-    pub fn render_shader_create(path_vert: []const u8, path_frag: []const u8) u32 {
+    pub fn render_shader_create(_:*Render_State_Internal,path_vert: []const u8, path_frag: []const u8) u32 {
         var success = false;
         var log: [512]u8 = undefined;
 
@@ -174,4 +198,5 @@ pub const Render_State_Internal = struct {
 
         return shader;
     }
+    
 };
