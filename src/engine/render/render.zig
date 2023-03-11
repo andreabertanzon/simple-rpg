@@ -33,35 +33,45 @@ pub const Render = struct {
         c.SDL_GL_SwapWindow(window);
     }
 
-    pub fn render_quad(self: *Render, _: c.vec2, _: c.vec2, _: c.vec4) void {
+    pub fn render_quad(self: *Render, pos: c.vec2, size: c.vec2, color: c.vec4) void {
+        // c.glBindVertexArray(self.state.vao_quad);
+
+        // c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
+        // c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
+
+        // c.glBindVertexArray(0);
+        c.glUseProgram(self.state.shader_default);
+
+        var model: c.mat4x4 = undefined;
+        c.mat4x4_identity(model);
+
+        c.mat4x4_translate(model, pos[0], pos[1], 0);
+        c.mat4x4_scale_aniso(model, model, size[0], size[1], 1);
+
+        c.glUniformMatrix4fv(c.glGetUniformLocation(self.state.shader_default, "model"), 1, c.GL_FALSE, &model[0][0]);
+        c.glUniform4fv(c.glGetUniformLocation(self.state.shader_default, "color"), 1, color);
+
         c.glBindVertexArray(self.state.vao_quad);
 
-        c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
+        c.glBindTexture(c.GL_TEXTURE_2D, self.state.texture_color);
         c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
 
         c.glBindVertexArray(0);
     }
 
-    pub fn render_init_shaders(self:*Render) void {
+    pub fn render_init_shaders(self: *Render) void {
         self.shader_default = self.render_shader_create("./shaders/default.vert", "./shaders/default.frag");
         c.mat4x4_ortho(self.state.projection, 0, self.width, 0, self.height, -2, -2);
 
         c.glUseProgram(self.state.shader_default);
-        c.glUniformMatrix4fv(
-            c.glGenUniformLocation(self.state.shader_default,"projection"),
-            1,
-            c.GL_FALSE,
-            &self.state.projection[0][0]
-        );
+        c.glUniformMatrix4fv(c.glGenUniformLocation(self.state.shader_default, "projection"), 1, c.GL_FALSE, &self.state.projection[0][0]);
     }
 
-    pub fn render_init_color_texture(texture:*u32) void {
+    pub fn render_init_color_texture(texture: *u32) void {
         c.glGenTextures(1, texture);
         c.glBindTexture(c.GL_TEXTURE_2D, *texture);
-        var solid_white= [4]u8{255, 255, 255, 255};
-        c.glTexImage2D(c.GL_TEXTURE_2D, 0,
-        c.GL_RGBA, 1, 1, 0, c.GL_RGBA, 
-        c.GL_UNSIGNED_BYTE, solid_white);
+        var solid_white = [4]u8{ 255, 255, 255, 255 };
+        c.glTexImage2D(c.GL_TEXTURE_2D, 0, c.GL_RGBA, 1, 1, 0, c.GL_RGBA, c.GL_UNSIGNED_BYTE, solid_white);
 
         c.glBindTexture(c.GL_TEXTURE_2D, 0);
     }
@@ -148,7 +158,7 @@ pub const Render_State_Internal = struct {
         c.glBindVertexArray(0);
     }
 
-    pub fn render_shader_create(_:*Render_State_Internal,path_vert: []const u8, path_frag: []const u8) u32 {
+    pub fn render_shader_create(_: *Render_State_Internal, path_vert: []const u8, path_frag: []const u8) u32 {
         var success = false;
         var log: [512]u8 = undefined;
 
@@ -158,9 +168,12 @@ pub const Render_State_Internal = struct {
             @panic("Error rendering shader\n");
         }
 
+        // defines a shader object
         var shader_vertex = c.glCreateShader(c.GL_VERTEX_SHADER);
+        // attaches the GLSL shader file to the shader object
         c.glShaderSource(shader_vertex, 1, &file_vertex, null);
         c.glCompileShader(shader_vertex);
+        // checks if the shader compilation was successful.
         c.glGetShaderiv(shader_vertex, c.GL_COMPILE_STATUS, &success);
         if (!success) {
             c.glGetShaderInfoLog(shader_vertex, 512, null, log);
@@ -168,7 +181,6 @@ pub const Render_State_Internal = struct {
             @panic("Error compiling vertex shader");
         }
 
-        // loads the GLSL script in memory;
         const file_fragment: io.File = io.io_file_read(path_frag);
         if (!file_fragment.is_valid) {
             print("Error reading shader:{c}", .{path_frag});
@@ -185,7 +197,10 @@ pub const Render_State_Internal = struct {
             @panic("Error compiling fragment shader");
         }
 
+        // multiple shaders combined create a shader program that is a final linked
+        // version of those multiple shaders.
         var shader: u32 = c.glCreateProgram();
+        // attach the previously defined shaders to the program and link them.
         c.glAttachShader(shader, shader_vertex);
         c.glAttachShader(shader, shader_fragment);
         c.glLinkProgram(shader);
@@ -198,5 +213,4 @@ pub const Render_State_Internal = struct {
 
         return shader;
     }
-    
 };
