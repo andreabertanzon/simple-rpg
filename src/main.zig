@@ -1,10 +1,13 @@
 const std = @import("std");
+const zm = @import("zmath");
+
 const c = @cImport({
     @cInclude("glad.h");
     @cInclude("SDL.h");
     @cInclude("SDL_image.h");
-    @cInclude("linmath.h");
+    // @cInclude("linmath.h");
 });
+
 const print = std.debug.print;
 const g = @import("engine/global.zig");
 const io = @import("engine/io/io.zig");
@@ -34,9 +37,9 @@ pub fn main() !void {
         global.render.render_begin();
 
         global.render.render_quad(
-            c.vec2{global.render.width * 0.5, global.render.height * 0.5},
-            c.vec2{50,50},
-            c.vec4{1,1,1,1}
+            [2]f32{global.render.width * 0.5, global.render.height * 0.5},
+            [2]f32{50,50},
+            zm.f32x4(1,1,1,1)
         );
 
         global.render.render_end(global.render.window);

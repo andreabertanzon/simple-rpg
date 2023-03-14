@@ -5,6 +5,8 @@ const c = @cImport({
     @cInclude("linmath.h");
 });
 
+const zm = @import("zmath");
+
 const std = @import("std");
 const io = @import("../io/io.zig");
 
@@ -20,6 +22,7 @@ pub const Render = struct {
         var state = Render_State_Internal{};
         var window = state.render_init_window(800, 600);
         var render = Render{ .width = 800, .height = 600, .window = window, .state = state };
+        render.render_init_shaders();
         render.state.render_init_quad();
         return render;
     }
@@ -33,23 +36,14 @@ pub const Render = struct {
         c.SDL_GL_SwapWindow(window);
     }
 
-    pub fn render_quad(self: *Render, pos: c.vec2, size: c.vec2, color: c.vec4) void {
-        // c.glBindVertexArray(self.state.vao_quad);
-
-        // c.glPolygonMode(c.GL_FRONT_AND_BACK, c.GL_LINE);
-        // c.glDrawElements(c.GL_TRIANGLES, 6, c.GL_UNSIGNED_INT, null);
-
-        // c.glBindVertexArray(0);
+    pub fn render_quad(self: *Render, pos: [2]f32, _: [2]f32, color: [4]f32) void {
         c.glUseProgram(self.state.shader_default);
+        var matrix = zm.translation(pos[0], pos[1], 0);
 
-        var model: c.mat4x4 = undefined;
-        c.mat4x4_identity(model);
-
-        c.mat4x4_translate(model, pos[0], pos[1], 0);
-        c.mat4x4_scale_aniso(model, model, size[0], size[1], 1);
-
-        c.glUniformMatrix4fv(c.glGetUniformLocation(self.state.shader_default, "model"), 1, c.GL_FALSE, &model[0][0]);
-        c.glUniform4fv(c.glGetUniformLocation(self.state.shader_default, "color"), 1, color);
+        var arg_1278 = c.glGetUniformLocation(self.state.shader_default, "model");
+        c.glUniformMatrix4fv(arg_1278, 1, c.GL_FALSE, &matrix[0][0]);
+        var other_arg = c.glGetUniformLocation(self.state.shader_default, "color");
+        c.glUniform4fv(other_arg, 1, &color);
 
         c.glBindVertexArray(self.state.vao_quad);
 
@@ -60,11 +54,11 @@ pub const Render = struct {
     }
 
     pub fn render_init_shaders(self: *Render) void {
-        self.shader_default = self.render_shader_create("./shaders/default.vert", "./shaders/default.frag");
-        c.mat4x4_ortho(self.state.projection, 0, self.width, 0, self.height, -2, -2);
+        self.state.shader_default = self.state.render_shader_create("./shaders/default.vert", "./shaders/default.frag");
+        c.mat4x4_ortho(&self.state.projection, 0.0, self.width, 0.0, self.height, -2, -2);
 
         c.glUseProgram(self.state.shader_default);
-        c.glUniformMatrix4fv(c.glGenUniformLocation(self.state.shader_default, "projection"), 1, c.GL_FALSE, &self.state.projection[0][0]);
+        c.glUniformMatrix4fv(c.glGetUniformLocation(self.state.shader_default, "projection"), 1, c.GL_FALSE, &self.state.projection[0][0]);
     }
 
     pub fn render_init_color_texture(texture: *u32) void {
@@ -159,43 +153,52 @@ pub const Render_State_Internal = struct {
     }
 
     pub fn render_shader_create(_: *Render_State_Internal, path_vert: []const u8, path_frag: []const u8) u32 {
-        var success = false;
-        var log: [512]u8 = undefined;
+        var success:i32 = undefined;
+        // var log: [512]u8 = undefined;
 
-        var file_vertex: io.File = io.io_file_read(path_vert);
+        var file_vertex: io.File = io.io_file_read(path_vert) catch |e|{
+            print("{s}", .{@errorName(e)});
+            return 0;
+        };
         if (!file_vertex.is_valid) {
             print("path: {c}\n", .{path_vert});
-            @panic("Error rendering shader\n");
+            //@panic("Error rendering shader\n");
+            return 0;
         }
 
         // defines a shader object
-        var shader_vertex = c.glCreateShader(c.GL_VERTEX_SHADER);
+        var shader_vertex:u32 = c.glCreateShader(c.GL_VERTEX_SHADER);
         // attaches the GLSL shader file to the shader object
-        c.glShaderSource(shader_vertex, 1, &file_vertex, null);
+        const paramValues = [_][*:0]const u8 {@ptrCast([*:0]const u8, file_vertex.data)};
+        c.glShaderSource(shader_vertex, 1, &paramValues, null);
         c.glCompileShader(shader_vertex);
         // checks if the shader compilation was successful.
         c.glGetShaderiv(shader_vertex, c.GL_COMPILE_STATUS, &success);
-        if (!success) {
-            c.glGetShaderInfoLog(shader_vertex, 512, null, log);
-            print("shader log: {c}\n", .{log});
-            @panic("Error compiling vertex shader");
-        }
+        // if (success == 0) {
+        //     c.glGetShaderInfoLog(shader_vertex, 512, null, &log);
+        //     print("shader log: {c}\n", .{log});
+        //     return 0;
+        // }
 
-        const file_fragment: io.File = io.io_file_read(path_frag);
-        if (!file_fragment.is_valid) {
-            print("Error reading shader:{c}", .{path_frag});
-            @panic("Error in reading shader fragment");
-        }
+        const file_fragment: io.File = io.io_file_read(path_frag) catch {
+            return 0;
+        };
+        // if (!file_fragment.is_valid) {
+        //     print("Error reading shader:{c}", .{path_frag});
+        //     return 0;
+        // }
 
         var shader_fragment = c.glCreateShader(c.GL_FRAGMENT_SHADER);
-        c.glShaderSource(shader_fragment);
+        const paramValues2 = [_][*:0]const u8 {@ptrCast([*:0]const u8, file_fragment.data)};
+        c.glShaderSource(shader_fragment, 1, &paramValues2,null);
         c.glCompileShader(shader_fragment);
         c.glGetShaderiv(shader_fragment, c.GL_COMPILE_STATUS, &success);
-        if (!success) {
-            c.glShaderInfoLog(shader_fragment, 512, null, log);
-            print("Error compiling fragment shader:{c}", .{log});
-            @panic("Error compiling fragment shader");
-        }
+        // if (success == 0) {
+        //     c.glShaderInfoLog(shader_fragment, 512, null, log);
+        //     print("Error compiling fragment shader:{c}", .{log});
+        //     return 0;
+        //     //@panic("Error compiling fragment shader");
+        // }
 
         // multiple shaders combined create a shader program that is a final linked
         // version of those multiple shaders.
@@ -205,11 +208,11 @@ pub const Render_State_Internal = struct {
         c.glAttachShader(shader, shader_fragment);
         c.glLinkProgram(shader);
         c.glGetProgramiv(shader, c.GL_LINK_STATUS, &success);
-        if (!success) {
-            c.glShaderInfoLog(shader, 512, null, log);
-            print("Linking shader:{c}", .{log});
-            @panic("error linking shader");
-        }
+        // if (success==0) {
+        //     c.glGetShaderInfoLog(shader, 512, null, &log);
+        //     print("Linking shader:{c}", .{log});
+        //     //@panic("error linking shader");
+        // }
 
         return shader;
     }

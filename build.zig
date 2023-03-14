@@ -1,4 +1,5 @@
 const std = @import("std");
+const zmath = @import("libs/zmath/build.zig");
 
 // Although this function looks imperative, note that its job is to
 // declaratively construct a build graph that will be executed by an external
@@ -23,11 +24,7 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     glad.linkLibC();
-    
-    // const sdl_path = "/opt/homebrew/";
-    // exe.addIncludePath(sdl_path ++ "include/SDL2");
-    // exe.addLibraryPath(sdl_path ++ "lib/");
-    // exe.addIncludePath(sdl_path ++ "");
+
     const sdl_path = "/usr/";
     exe.addIncludePath(sdl_path ++ "include/SDL2");
     exe.addLibraryPath(sdl_path ++ "lib/");
@@ -41,9 +38,12 @@ pub fn build(b: *std.Build) void {
     exe.linkSystemLibrary("SDL2");
     exe.linkSystemLibrary("SDL2_image");
     exe.linkLibC();
-  
+
     exe.linkLibrary(glad);
 
+    const zmath_pkg = zmath.Package.build(b, .{});
+
+    exe.addModule("zmath", zmath_pkg.zmath);
 
     exe.install();
 
