@@ -39,7 +39,7 @@ pub fn main() !void {
         global.render.render_quad(
             [2]f32{global.render.width * 0.5, global.render.height * 0.5},
             [2]f32{50,50},
-            zm.f32x4(1,1,1,1)
+            zm.f32x4(0,1,0,1)
         );
 
         global.render.render_end(global.render.window);

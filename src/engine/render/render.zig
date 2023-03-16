@@ -153,13 +153,18 @@ pub const Render_State_Internal = struct {
     }
 
     pub fn render_shader_create(_: *Render_State_Internal, path_vert: []const u8, path_frag: []const u8) u32 {
-        var success:i32 = undefined;
+        var success: i32 = undefined;
         // var log: [512]u8 = undefined;
-
-        var file_vertex: io.File = io.io_file_read(path_vert) catch |e|{
+        //  Get an allocator
+        var gp = std.heap.GeneralPurposeAllocator(.{ .safety = true }){};
+        defer _ = gp.deinit();
+        const allocator = gp.allocator();
+        var file_vertex: io.File = io.io_file_read(path_vert, allocator) catch |e| {
             print("{s}", .{@errorName(e)});
             return 0;
         };
+        defer allocator.free(file_vertex.data);
+
         if (!file_vertex.is_valid) {
             print("path: {c}\n", .{path_vert});
             //@panic("Error rendering shader\n");
@@ -167,10 +172,12 @@ pub const Render_State_Internal = struct {
         }
 
         // defines a shader object
-        var shader_vertex:u32 = c.glCreateShader(c.GL_VERTEX_SHADER);
+        var shader_vertex: u32 = c.glCreateShader(c.GL_VERTEX_SHADER);
         // attaches the GLSL shader file to the shader object
-        const paramValues = [_][*:0]const u8 {@ptrCast([*:0]const u8, file_vertex.data)};
-        c.glShaderSource(shader_vertex, 1, &paramValues, null);
+        var c_src = [_][*]const u8{file_vertex.data.ptr};
+        var c_len = [_]i32{@intCast(i32, file_vertex.data.len)};
+        c.glShaderSource(shader_vertex, 1, &c_src, &c_len);
+
         c.glCompileShader(shader_vertex);
         // checks if the shader compilation was successful.
         c.glGetShaderiv(shader_vertex, c.GL_COMPILE_STATUS, &success);
@@ -180,17 +187,19 @@ pub const Render_State_Internal = struct {
         //     return 0;
         // }
 
-        const file_fragment: io.File = io.io_file_read(path_frag) catch {
+        const file_fragment: io.File = io.io_file_read(path_frag, allocator) catch {
             return 0;
         };
+        defer allocator.free(file_fragment.data);
         // if (!file_fragment.is_valid) {
         //     print("Error reading shader:{c}", .{path_frag});
         //     return 0;
         // }
 
         var shader_fragment = c.glCreateShader(c.GL_FRAGMENT_SHADER);
-        const paramValues2 = [_][*:0]const u8 {@ptrCast([*:0]const u8, file_fragment.data)};
-        c.glShaderSource(shader_fragment, 1, &paramValues2,null);
+        var c_src_2 = [_][*]const u8{file_fragment.data.ptr};
+        var c_len_2 = [_]i32{@intCast(i32, file_fragment.data.len)};
+        c.glShaderSource(shader_fragment, 1, &c_src_2, &c_len_2);
         c.glCompileShader(shader_fragment);
         c.glGetShaderiv(shader_fragment, c.GL_COMPILE_STATUS, &success);
         // if (success == 0) {
